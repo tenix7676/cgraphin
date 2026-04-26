@@ -4,7 +4,7 @@
 
 //compile with
 /*
-cl.exe /I./ cgraphin.c /link /defaultlib:sdl3 && cgraphin.exe
+cl.exe /I./ cgraphin.c /link /defaultlib:sdl3 /subsystem:console && cgraphin.exe
 */
 int width, height;
 int to_screen_x(int x)
@@ -16,6 +16,10 @@ int to_screen_y(int y)
     return -y+height/2;
 }
 
+double f(double x)
+{
+    return x*x;
+}
 int main(int argc, char* argv[])
 {
     SDL_Window* win;
@@ -28,6 +32,8 @@ int main(int argc, char* argv[])
     int it=0, j=0;
     int xdir=-1,ydir=1;
     
+    double step = 1;
+    
     SDL_SetRenderDrawColor(ren, 0,0,0,50);
     SDL_RenderClear(ren);
     while(true)
@@ -38,13 +44,23 @@ int main(int argc, char* argv[])
                 return 0;
         }
         
-
-        int ms=1;
-        SDL_SetRenderDrawColor(ren, c,255-c,0,255);
+        double s1 = (y-f(x));
+        double s2 = (y-f(x-step));
+        double s3 = (y+step-f(x));
+        double s4 = (y+step-f(x-step));
+        if(!((s1<0&&s2<0&&s3<0&&s4<0)
+          || (s1>0&&s2>0&&s3>0&&s4>0)) )
+        {
+        SDL_SetRenderDrawColor(ren, 255,255,255,255);            
+        }
+        else
+        {
+        SDL_SetRenderDrawColor(ren, 0,0,0,0);            
+        }
         SDL_RenderPoint(ren, to_screen_x(x), to_screen_y(y));
         SDL_RenderPresent(ren);
-        c+=1;
-        //SDL_Delay(ms);
+        
+        
         
         if(j<it)
         {
