@@ -18,7 +18,7 @@ int to_screen_y(int y)
 
 double f(double x)
 {
-    return x*x;
+    return sin(x);
 }
 int main(int argc, char* argv[])
 {
@@ -32,9 +32,9 @@ int main(int argc, char* argv[])
     int it=0, j=0;
     int xdir=-1,ydir=1;
     
-    double step = 1;
+    double step = .01;
     
-    SDL_SetRenderDrawColor(ren, 0,0,0,50);
+    SDL_SetRenderDrawColor(ren, 0,0,0,0);
     SDL_RenderClear(ren);
     while(true)
     {  
@@ -44,10 +44,11 @@ int main(int argc, char* argv[])
                 return 0;
         }
         
-        double s1 = (y-f(x));
-        double s2 = (y-f(x-step));
-        double s3 = (y+step-f(x));
-        double s4 = (y+step-f(x-step));
+        double scale=step;
+        double s1 = (scale*y-f(scale*x));
+        double s2 = (scale*y-f(scale*x-step));
+        double s3 = (scale*y+step-f(scale*x));
+        double s4 = (scale*y+step-f(scale*x-step));
         if(!((s1<0&&s2<0&&s3<0&&s4<0)
           || (s1>0&&s2>0&&s3>0&&s4>0)) )
         {
