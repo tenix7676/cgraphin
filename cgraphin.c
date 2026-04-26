@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
                 return 0;
         }
         
-        if(y>-256)
+        if(r!=0)
         {
         g=255-r;
         b=0;
