@@ -27,7 +27,8 @@ int main(int argc, char* argv[])
     int x=0,y=0;
     int it=0, j=0;
     int xdir=-1,ydir=1;
-    
+    unsigned char bright=255;
+    unsigned char r=bright, g=0, b=0;
     SDL_SetRenderDrawColor(ren, 0,0,0,50);
     SDL_RenderClear(ren);
     while(true)
@@ -39,12 +40,25 @@ int main(int argc, char* argv[])
         }
         
 
-        int ms=1;
-        SDL_SetRenderDrawColor(ren, c,255-c,0,255);
+        SDL_SetRenderDrawColor(ren, r, g, b,255);
         SDL_RenderPoint(ren, to_screen_x(x), to_screen_y(y));
         SDL_RenderPresent(ren);
-        c+=1;
-        //SDL_Delay(ms);
+        
+        if(r!=0 && b == 0)
+        {
+            r--;
+            g++;
+        }
+        else if(g!=0)
+        {
+            g--;
+            b++;
+        }
+        else if(b!=0)
+        {
+            b--;
+            r++;
+        }
         
         if(j<it)
         {
