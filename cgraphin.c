@@ -31,6 +31,9 @@ int main(int argc, char* argv[])
     unsigned char r=bright, g=0, b=0;
     SDL_SetRenderDrawColor(ren, 0,0,0,50);
     SDL_RenderClear(ren);
+    
+    y=height / 2;
+    
     while(true)
     {  
         while(SDL_PollEvent(&e))
@@ -40,9 +43,14 @@ int main(int argc, char* argv[])
         }
         
 
+        if(y > - height / 2)
+        {
         SDL_SetRenderDrawColor(ren, r, g, b,255);
-        SDL_RenderPoint(ren, to_screen_x(x), to_screen_y(y));
+        SDL_RenderLine(ren, to_screen_x(x-100), to_screen_y(y), to_screen_x(x+100), to_screen_y(y));
         SDL_RenderPresent(ren);
+        
+        y--;
+        }
         
         if(r!=0 && b == 0)
         {
@@ -60,20 +68,20 @@ int main(int argc, char* argv[])
             r++;
         }
         
-        if(j<it)
-        {
-            x+=xdir;
-            y+=ydir;
-            j++;
-        }
-        else
-        {
-            j=0;
-            if(xdir == -1 && ydir == -1) { xdir = 1; ydir = -1; }
-            else if(xdir == 1 && ydir == -1) { xdir = 1; ydir = 1; }
-            else if(xdir == 1 && ydir == 1) { xdir = -1; ydir = 1; }
-            else if(xdir == -1 && ydir == 1) { xdir = -1; ydir = -1; it++; y++; }
-        }
+        // if(j<it)
+        // {
+            // x+=xdir;
+            // y+=ydir;
+            // j++;
+        // }
+        // else
+        // {
+            // j=0;
+            // if(xdir == -1 && ydir == -1) { xdir = 1; ydir = -1; }
+            // else if(xdir == 1 && ydir == -1) { xdir = 1; ydir = 1; }
+            // else if(xdir == 1 && ydir == 1) { xdir = -1; ydir = 1; }
+            // else if(xdir == -1 && ydir == 1) { xdir = -1; ydir = -1; it++; y++; }
+        // }
     }
     return 0;
 }
