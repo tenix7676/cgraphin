@@ -25,7 +25,11 @@ int main(int argc, char* argv[])
     SDL_Event e;
     unsigned char c = 128;
     int x=0,y=0;
+    int it=0, j=0;
+    int xdir=-1,ydir=1;
     
+    SDL_SetRenderDrawColor(ren, 0,0,0,50);
+    SDL_RenderClear(ren);
     while(true)
     {  
         while(SDL_PollEvent(&e))
@@ -34,57 +38,28 @@ int main(int argc, char* argv[])
                 return 0;
         }
         
-        SDL_SetRenderDrawColor(ren, 0,0,0,50);
-        SDL_RenderClear(ren);
-        SDL_SetRenderDrawColor(ren, c,128-c,0,50);
-        SDL_RenderPoint(ren, to_screen_x(x), to_screen_y(y));
+
         int ms=1;
-        for(int it=0; it < 500; ++it)
-        {
-            for(int j=0; j < it; ++j)
-            {
-                x--;
-                y--;
-                SDL_SetRenderDrawColor(ren, c,255-c,0,255);
-                SDL_RenderPoint(ren, to_screen_x(x), to_screen_y(y));
-                SDL_RenderPresent(ren);
-                c+=1;
-                SDL_Delay(ms);
-            }
-            for(int j=0; j < it; ++j)
-            {
-                x++;
-                y--;
-                SDL_SetRenderDrawColor(ren, c,255-c,0,255);
-                SDL_RenderPoint(ren, to_screen_x(x), to_screen_y(y));
-                SDL_RenderPresent(ren);
-                c+=1;
-                SDL_Delay(ms);
-            }
-            for(int j=0; j < it; ++j)
-            {
-                x++;
-                y++;
-                SDL_SetRenderDrawColor(ren, c,255-c,0,255);
-                SDL_RenderPoint(ren, to_screen_x(x), to_screen_y(y));
-                SDL_RenderPresent(ren);
-                c+=1;
-                SDL_Delay(ms);
-            }
-            for(int j=0; j < it; ++j)
-            {
-                x--;
-                y++;
-                SDL_SetRenderDrawColor(ren, c,255-c,0,255);
-                SDL_RenderPoint(ren, to_screen_x(x), to_screen_y(y));
-                SDL_RenderPresent(ren);
-                c+=1;
-                SDL_Delay(ms);
-            }
-            y++;
-        }
+        SDL_SetRenderDrawColor(ren, c,255-c,0,255);
+        SDL_RenderPoint(ren, to_screen_x(x), to_screen_y(y));
         SDL_RenderPresent(ren);
-        x=0,y=0;
+        c+=1;
+        //SDL_Delay(ms);
+        
+        if(j<it)
+        {
+            x+=xdir;
+            y+=ydir;
+            j++;
+        }
+        else
+        {
+            j=0;
+            if(xdir == -1 && ydir == -1) { xdir = 1; ydir = -1; }
+            else if(xdir == 1 && ydir == -1) { xdir = 1; ydir = 1; }
+            else if(xdir == 1 && ydir == 1) { xdir = -1; ydir = 1; }
+            else if(xdir == -1 && ydir == 1) { xdir = -1; ydir = -1; it++; y++; }
+        }
     }
     return 0;
 }
