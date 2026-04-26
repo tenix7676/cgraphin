@@ -2,9 +2,8 @@
 #include <./SDL3/SDL.h>
 #include <./SDL3/SDL_main.h>
 
-//compile with
-/*
-cl.exe /I./ cgraphin.c /link /defaultlib:sdl3 && cgraphin.exe
+/*compile with
+cl.exe /I./ cgraphin.c /link /defaultlib:sdl3 /subsystem:console && cgraphin.exe
 */
 int width, height;
 int to_screen_x(int x)
@@ -29,11 +28,11 @@ int main(int argc, char* argv[])
     int xdir=-1,ydir=1;
     unsigned char bright=255;
     unsigned char r=bright, g=0, b=0;
-    SDL_SetRenderDrawColor(ren, 0,0,0,50);
+    SDL_SetRenderDrawColor(ren, 0,0,255,1);
     SDL_RenderClear(ren);
     
-    y=height / 2;
     
+    bool dec_green=false,dec_blue=false;
     while(true)
     {  
         while(SDL_PollEvent(&e))
@@ -42,46 +41,25 @@ int main(int argc, char* argv[])
                 return 0;
         }
         
-
-        if(y > - height / 2)
+        if(y>-256)
         {
+        g=255-r;
+        b=0;
         SDL_SetRenderDrawColor(ren, r, g, b,255);
-        SDL_RenderLine(ren, to_screen_x(x-100), to_screen_y(y), to_screen_x(x+100), to_screen_y(y));
-        SDL_RenderPresent(ren);
-        
-        y--;
-        }
-        
-        if(r!=0 && b == 0)
-        {
-            r--;
-            g++;
-        }
-        else if(g!=0)
+        SDL_RenderPoint(ren, to_screen_x(x+g-(255-r)/2), to_screen_y(y));
+        while(g!=0)
         {
             g--;
             b++;
+            SDL_SetRenderDrawColor(ren, r, g, b,255);
+            SDL_RenderPoint(ren, to_screen_x(x+g-(255-r)/2), to_screen_y(y));
         }
-        else if(b!=0)
-        {
-            b--;
-            r++;
-        }
+        r--;
+        y--;
         
-        // if(j<it)
-        // {
-            // x+=xdir;
-            // y+=ydir;
-            // j++;
-        // }
-        // else
-        // {
-            // j=0;
-            // if(xdir == -1 && ydir == -1) { xdir = 1; ydir = -1; }
-            // else if(xdir == 1 && ydir == -1) { xdir = 1; ydir = 1; }
-            // else if(xdir == 1 && ydir == 1) { xdir = -1; ydir = 1; }
-            // else if(xdir == -1 && ydir == 1) { xdir = -1; ydir = -1; it++; y++; }
-        // }
+        SDL_RenderPresent(ren);
+        SDL_Delay(5);
+        }
     }
     return 0;
 }
