@@ -18,32 +18,39 @@ int to_screen_y(int y)
 
 double f(double x)
 {
-    return sin(x);
+    return pow(tan(sin(cos(x*x))),5); 
 }
 int main(int argc, char* argv[])
 {
     SDL_Window* win;
     SDL_Renderer* ren;
-    SDL_CreateWindowAndRenderer("cgraphin", 1000, 1000,SDL_WINDOW_TRANSPARENT, &win, &ren);
+    SDL_CreateWindowAndRenderer("cgraphin", 500, 500,SDL_WINDOW_TRANSPARENT, &win, &ren);
     SDL_GetWindowSize(win, &width, &height);
     SDL_Event e;
-    unsigned char c = 128;
     int x=0,y=0;
     int it=0, j=0;
     int xdir=-1,ydir=1;
     
-    double step = .01;
+    double step = pow(2,-5);
     
     SDL_SetRenderDrawColor(ren, 0,0,0,0);
     SDL_RenderClear(ren);
     while(true)
     {  
-        while(SDL_PollEvent(&e))
-        {
-            if(e.type == SDL_EVENT_QUIT)
-                return 0;
-        }
-        
+        if(it < fmax(width, height))
+            while(SDL_PollEvent(&e) != 0)
+            {
+                if(e.type == SDL_EVENT_QUIT)
+                    return 0;
+            }
+        else
+            while(SDL_WaitEvent(&e) != 0)
+            {
+                if(e.type == SDL_EVENT_QUIT)
+                    return 0;
+            }
+        if(-width/ 2 < x && x < width / 2 && -height/ 2 < y && y < height / 2)
+        {    
         double scale=step;
         double s1 = (scale*y-f(scale*x));
         double s2 = (scale*y-f(scale*x-step));
@@ -60,7 +67,7 @@ int main(int argc, char* argv[])
         }
         SDL_RenderPoint(ren, to_screen_x(x), to_screen_y(y));
         SDL_RenderPresent(ren);
-        
+        }
         
         
         if(j<it)
