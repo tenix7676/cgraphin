@@ -8,40 +8,6 @@ double f(double);
 /*
 cl.exe /I./ cgraphin.c /link /defaultlib:sdl3 /subsystem:console && cgraphin.exe
 */
-int width, height;
-int to_screen_x(int x)
-{
-    return x+width/2;
-}
-int to_screen_y(int y)
-{
-    return -y+height/2;
-}
-int to_graph_x(int scr_x)
-{
-    return scr_x-width/2;
-}
-int to_graph_y(int scr_y)
-{
-    return -(scr_y-height/2);
-}
-
-char** map;
-
-double scale;
-void graph_function_to_map()
-{
-    for(size_t i=0; i < height; ++i)
-        for(size_t j=0; j < width; ++j)
-        {
-            int y = to_graph_y(i);
-            int x = to_graph_x(j);
-            double s=scale*y-f(scale*x);
-            char sign=(s>0)-(s<0);
-            map[i][j]=sign;
-        }
-}
-
 typedef struct Lab {float L; float a; float b;} Lab;
 typedef struct RGB {float r; float g; float b;} RGB;
 
@@ -80,17 +46,123 @@ RGB oklab_to_linear_srgb(Lab c)
     };
     return rgb;
 }
+
+int width, height;
+int to_screen_x(int x)
+{
+    return x+width/2;
+}
+int to_screen_y(int y)
+{
+    return -y+height/2;
+}
+int to_graph_x(int scr_x)
+{
+    return scr_x-width/2;
+}
+int to_graph_y(int scr_y)
+{
+    return -(scr_y-height/2);
+}
+
+char** map;
+
+double scale;
+typedef struct thread_data
+{
+    char** map;
+    size_t row_start;
+    size_t row_end;
+    size_t col_start;
+    size_t col_end;
+} thread_data;
+//func has to look like this:
+// typedef int (SDLCALL *SDL_ThreadFunction) (void *data);
+int thread_func(void* data)
+{
+    thread_data td= *((thread_data*)data);
+    printf("td: %p\n%d\n%d\n%d\n%d\n", td.map,td.row_start,td.row_end,td.col_start,td.col_end);
+    for(size_t i=td.row_start; i < td.row_end; ++i)
+        for(size_t j=td.col_start; j < td.col_end; ++j)
+        {
+            int y = to_graph_y(i);
+            int x = to_graph_x(j);
+            double s=scale*y-f(scale*x);
+            char sign=(s>0)-(s<0);
+            td.map[i][j]=sign;
+        }
+    return 0;
+}
+void graph_function_to_map()
+{
+    //lets try:
+    //4  threads done
+    //12 threads
+    //n  threads?
+    SDL_Thread* threads[4];
+    thread_data tds[4];
+    
+    
+    
+    tds[0].map=map;
+    tds[0].row_start=0;
+    tds[0].row_end=height/2;
+    tds[0].col_start=0;
+    tds[0].col_end=width/2;
+    threads[0]=SDL_CreateThread(thread_func,"0",&tds[0]);
+
+    tds[1].map=map;
+    tds[1].row_start=0;
+    tds[1].row_end=height/2;
+    tds[1].col_start=width/2;
+    tds[1].col_end=width;
+    threads[1]=SDL_CreateThread(thread_func,"1",&tds[1]);
+    
+    tds[2].map=map;
+    tds[2].row_start=height/2;
+    tds[2].row_end=height;
+    tds[2].col_start=0;
+    tds[2].col_end=width/2;
+    threads[2]=SDL_CreateThread(thread_func,"2",&tds[2]);
+
+    tds[3].map=map;
+    tds[3].row_start=height/2;
+    tds[3].row_end=height;
+    tds[3].col_start=width/2;
+    tds[3].col_end=width;
+    threads[3]=SDL_CreateThread(thread_func,"3",&tds[3]);
+    
+    int status=0;
+    for(size_t i=0; i<4; ++i)
+    {
+        SDL_WaitThread(threads[i], &status);
+        printf("%p status: %d\n", threads[i], status);
+    }
+    // for(size_t i=0; i < height; ++i)
+        // for(size_t j=0; j < width; ++j)
+        // {
+            // int y = to_graph_y(i);
+            // int x = to_graph_x(j);
+            // double s=scale*y-f(scale*x);
+            // char sign=(s>0)-(s<0);
+            // map[i][j]=sign;
+        // }
+}
+
 enum shape
 {
     SPIRAL,
     LEFT_TO_RIGHT,
     MAX_SHAPES
 };
-double scale=1./512;
+double scale=1./128;
 double f(double x)
 {
-    if(x==0) return 0;
-    return sin(1/x);
+    // return x;
+    double result=sin(x);
+    for(int i=0; i < 1000; ++i)
+        result = sin(tan(result));
+    return result;
 }
 int main(int argc, char* argv[])
 {
@@ -99,11 +171,11 @@ int main(int argc, char* argv[])
     SDL_CreateWindowAndRenderer("cgraphin", 500, 500,SDL_WINDOW_TRANSPARENT | SDL_WINDOW_FULLSCREEN, &win, &ren);
     SDL_GetWindowSize(win, &width, &height);
     SDL_Event e;
-    float L=0.5;
-    float h=0;
-    float C=0.5;
-    int thick_x=10;
-    int thick_y=10;
+    float L=.9;
+    float C=0.125;
+    float h=0.0;
+    int thick_x=2;
+    int thick_y=2;
     int x,y;
     enum shape shp=LEFT_TO_RIGHT;
     switch(shp)
@@ -159,13 +231,11 @@ int main(int argc, char* argv[])
         if(!((s1<0&&s2<0&&s3<0&&s4<0)
           || (s1>0&&s2>0&&s3>0&&s4>0)) )
         {
-            L=0.9;
-            C=0.09;
             Lab lab = {L,C*cos(h),C*sin(h)};
             RGB rgb = oklab_to_linear_srgb(lab);
             SDL_SetRenderDrawColorFloat(ren,rgb.r,rgb.g,rgb.b,1);
             SDL_FRect rect={ to_screen_x(x-thick_x/2), to_screen_y(y-thick_y/2),thick_x/2, thick_y/2 };
-            SDL_RenderRect(ren,&rect);
+            SDL_RenderFillRect(ren,&rect);
             SDL_RenderPresent(ren);
             h += 0.005;
         }
