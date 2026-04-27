@@ -45,7 +45,25 @@ void graph_function_to_map()
             map[i][j]=sign;
         }
 }
+float min3(float a, float b, float c) {
+    return fmin(fmin(a, b), c);
+}
 
+void hueToRGB(float h, float* r, float* g, float* b) {
+    float kr = fmod(5+h*6, 6);
+    float kg = fmod(3+h*6, 6);
+    float kb = fmod(1+h*6, 6);
+
+    *r = 1 - fmax(min3(kr, 4-kr, 1), 0);
+    *g = 1 - fmax(min3(kg, 4-kg, 1), 0);
+    *b = 1 - fmax(min3(kb, 4-kb, 1), 0);
+}
+enum shape
+{
+    SPIRAL,
+    LEFT_TO_RIGHT,
+    MAX_SHAPES
+};
 int main(int argc, char* argv[])
 {
     SDL_Window* win;
@@ -53,7 +71,19 @@ int main(int argc, char* argv[])
     SDL_CreateWindowAndRenderer("cgraphin", 500, 500,SDL_WINDOW_TRANSPARENT | SDL_WINDOW_FULLSCREEN, &win, &ren);
     SDL_GetWindowSize(win, &width, &height);
     SDL_Event e;
-    int x=0,y=0;
+    float hue=0;
+    float r,g,b;
+    int x,y;
+    enum shape shp=LEFT_TO_RIGHT;
+    switch(shp)
+    {
+    case SPIRAL:
+        x=0; y=0;
+        break;
+    case LEFT_TO_RIGHT:
+        x=-width/2; y=height/2;
+        break;
+    }
     int it=0, j=0;
     int xdir=-1,ydir=1;
     map = (char**)malloc(height*sizeof(char*));
@@ -65,10 +95,19 @@ int main(int argc, char* argv[])
     
     SDL_SetRenderDrawColor(ren, 0,0,0,0);
     SDL_RenderClear(ren);
-    SDL_SetRenderDrawColor(ren, 255,255,255,255);
     while(true)
-    {  
-        if(it < fmax(width, height))
+    {
+        bool go=true;
+        switch(shp)
+        {
+        case SPIRAL:
+            go=it < max(width, height);
+            break;
+        case LEFT_TO_RIGHT:
+            go=x < width/2;
+            break;
+        }
+        if(go)
             while(SDL_PollEvent(&e) != 0)
             {
                 if(e.type == SDL_EVENT_QUIT)
@@ -89,26 +128,49 @@ int main(int argc, char* argv[])
         if(!((s1<0&&s2<0&&s3<0&&s4<0)
           || (s1>0&&s2>0&&s3>0&&s4>0)) )
         {
+            hueToRGB(hue,&r,&g,&b);
+            SDL_SetRenderDrawColorFloat(ren,r,g,b,1);
             SDL_RenderPoint(ren, to_screen_x(x), to_screen_y(y));
             SDL_RenderPresent(ren);
+            if(x < -width/4)
+                hue += 0.001;
+            else if(x < 0)
+                hue += 0.0001;
+            else if(x < width/4)
+                hue += 0.0001;
+            else
+                hue += 0.001;
         }
         }
         
-        
-        if(j<it)
+        switch(shp)
         {
-            x+=xdir;
-            y+=ydir;
-            j++;
+        case SPIRAL:
+            if(j<it)
+            {
+                x+=xdir;
+                y+=ydir;
+                j++;
+            }
+            else
+            {
+                j=0;
+                if(xdir == -1 && ydir == -1) { xdir = 1; ydir = -1; }
+                else if(xdir == 1 && ydir == -1) { xdir = 1; ydir = 1; }
+                else if(xdir == 1 && ydir == 1) { xdir = -1; ydir = 1; }
+                else if(xdir == -1 && ydir == 1) { xdir = -1; ydir = -1; it++; y++; }
+            }
+            break;
+        case LEFT_TO_RIGHT:
+            y--;
+            if(y <= -height/2)
+            {    
+                x++;
+                y=height/2;
+            }
+            break;
         }
-        else
-        {
-            j=0;
-            if(xdir == -1 && ydir == -1) { xdir = 1; ydir = -1; }
-            else if(xdir == 1 && ydir == -1) { xdir = 1; ydir = 1; }
-            else if(xdir == 1 && ydir == 1) { xdir = -1; ydir = 1; }
-            else if(xdir == -1 && ydir == 1) { xdir = -1; ydir = -1; it++; y++; }
-        }
+
     }
     return 0;
 }
