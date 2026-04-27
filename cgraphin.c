@@ -26,12 +26,13 @@ int to_graph_y(int scr_y)
 }
 double f(double x)
 {
-    return x*(x);//pow(tan(sin(cos(x*x))),5); 
+    if(x==0) return 0;
+    return sin(1/x);
 }
 
 char** map;
 
-double scale=1./32;
+double scale=1./512;
 void graph_function_to_map()
 {
     for(size_t i=0; i < height; ++i)
@@ -90,7 +91,6 @@ int main(int argc, char* argv[])
         {
             SDL_RenderPoint(ren, to_screen_x(x), to_screen_y(y));
             SDL_RenderPresent(ren);
-            SDL_Delay(1);
         }
         }
         
