@@ -3,6 +3,7 @@
 #include <./SDL3/SDL.h>
 #include <./SDL3/SDL_main.h>
 
+double f(double);
 //compile with
 /*
 cl.exe /I./ cgraphin.c /link /defaultlib:sdl3 /subsystem:console && cgraphin.exe
@@ -24,15 +25,10 @@ int to_graph_y(int scr_y)
 {
     return -(scr_y-height/2);
 }
-double f(double x)
-{
-    if(x==0) return 0;
-    return sin(1/x);
-}
 
 char** map;
 
-double scale=1./512;
+double scale;
 void graph_function_to_map()
 {
     for(size_t i=0; i < height; ++i)
@@ -45,18 +41,44 @@ void graph_function_to_map()
             map[i][j]=sign;
         }
 }
-float min3(float a, float b, float c) {
-    return fmin(fmin(a, b), c);
+
+typedef struct Lab {float L; float a; float b;} Lab;
+typedef struct RGB {float r; float g; float b;} RGB;
+
+Lab linear_srgb_to_oklab(RGB c) 
+{
+    float l = 0.4122214708f * c.r + 0.5363325363f * c.g + 0.0514459929f * c.b;
+	float m = 0.2119034982f * c.r + 0.6806995451f * c.g + 0.1073969566f * c.b;
+	float s = 0.0883024619f * c.r + 0.2817188376f * c.g + 0.6299787005f * c.b;
+
+    float l_ = cbrtf(l);
+    float m_ = cbrtf(m);
+    float s_ = cbrtf(s);
+
+    Lab lab={
+        0.2104542553f*l_ + 0.7936177850f*m_ - 0.0040720468f*s_,
+        1.9779984951f*l_ - 2.4285922050f*m_ + 0.4505937099f*s_,
+        0.0259040371f*l_ + 0.7827717662f*m_ - 0.8086757660f*s_,
+    };
+    return lab;
 }
 
-void hueToRGB(float h, float* r, float* g, float* b) {
-    float kr = fmod(5+h*6, 6);
-    float kg = fmod(3+h*6, 6);
-    float kb = fmod(1+h*6, 6);
+RGB oklab_to_linear_srgb(Lab c) 
+{
+    float l_ = c.L + 0.3963377774f * c.a + 0.2158037573f * c.b;
+    float m_ = c.L - 0.1055613458f * c.a - 0.0638541728f * c.b;
+    float s_ = c.L - 0.0894841775f * c.a - 1.2914855480f * c.b;
 
-    *r = 1 - fmax(min3(kr, 4-kr, 1), 0);
-    *g = 1 - fmax(min3(kg, 4-kg, 1), 0);
-    *b = 1 - fmax(min3(kb, 4-kb, 1), 0);
+    float l = l_*l_*l_;
+    float m = m_*m_*m_;
+    float s = s_*s_*s_;
+
+    RGB rgb={
+		+4.0767416621f * l - 3.3077115913f * m + 0.2309699292f * s,
+		-1.2684380046f * l + 2.6097574011f * m - 0.3413193965f * s,
+		-0.0041960863f * l - 0.7034186147f * m + 1.7076147010f * s,
+    };
+    return rgb;
 }
 enum shape
 {
@@ -64,6 +86,12 @@ enum shape
     LEFT_TO_RIGHT,
     MAX_SHAPES
 };
+double scale=1./512;
+double f(double x)
+{
+    if(x==0) return 0;
+    return sin(1/x);
+}
 int main(int argc, char* argv[])
 {
     SDL_Window* win;
@@ -71,8 +99,11 @@ int main(int argc, char* argv[])
     SDL_CreateWindowAndRenderer("cgraphin", 500, 500,SDL_WINDOW_TRANSPARENT | SDL_WINDOW_FULLSCREEN, &win, &ren);
     SDL_GetWindowSize(win, &width, &height);
     SDL_Event e;
-    float hue=0;
-    float r,g,b;
+    float L=0.5;
+    float h=0;
+    float C=0.5;
+    int thick_x=10;
+    int thick_y=10;
     int x,y;
     enum shape shp=LEFT_TO_RIGHT;
     switch(shp)
@@ -128,18 +159,15 @@ int main(int argc, char* argv[])
         if(!((s1<0&&s2<0&&s3<0&&s4<0)
           || (s1>0&&s2>0&&s3>0&&s4>0)) )
         {
-            hueToRGB(hue,&r,&g,&b);
-            SDL_SetRenderDrawColorFloat(ren,r,g,b,1);
-            SDL_RenderPoint(ren, to_screen_x(x), to_screen_y(y));
+            L=0.9;
+            C=0.09;
+            Lab lab = {L,C*cos(h),C*sin(h)};
+            RGB rgb = oklab_to_linear_srgb(lab);
+            SDL_SetRenderDrawColorFloat(ren,rgb.r,rgb.g,rgb.b,1);
+            SDL_FRect rect={ to_screen_x(x-thick_x/2), to_screen_y(y-thick_y/2),thick_x/2, thick_y/2 };
+            SDL_RenderRect(ren,&rect);
             SDL_RenderPresent(ren);
-            if(x < -width/4)
-                hue += 0.001;
-            else if(x < 0)
-                hue += 0.0001;
-            else if(x < width/4)
-                hue += 0.0001;
-            else
-                hue += 0.001;
+            h += 0.005;
         }
         }
         
