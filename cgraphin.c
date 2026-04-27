@@ -70,18 +70,15 @@ char** map;
 double scale;
 typedef struct thread_data
 {
-    char** map;
     size_t row_start;
     size_t row_end;
     size_t col_start;
     size_t col_end;
+    size_t th_index;
 } thread_data;
-//func has to look like this:
-// typedef int (SDLCALL *SDL_ThreadFunction) (void *data);
 int thread_func(void* data)
 {
     thread_data td= *((thread_data*)data);
-    printf("td: %p\n%d\n%d\n%d\n%d\n", td.map,td.row_start,td.row_end,td.col_start,td.col_end);
     for(size_t i=td.row_start; i < td.row_end; ++i)
         for(size_t j=td.col_start; j < td.col_end; ++j)
         {
@@ -89,8 +86,9 @@ int thread_func(void* data)
             int x = to_graph_x(j);
             double s=scale*y-f(scale*x);
             char sign=(s>0)-(s<0);
-            td.map[i][j]=sign;
+            map[i][j]=sign;
         }
+    printf("Thread %-2d done!\n", td.th_index);
     return 0;
 }
 void graph_function_to_map()
@@ -98,55 +96,31 @@ void graph_function_to_map()
     //lets try:
     //4  threads done
     //12 threads
-    //n  threads?
-    SDL_Thread* threads[4];
-    thread_data tds[4];
+    //n  threads? ehhh its dum
+    SDL_Thread* threads[4*3];
+    thread_data tds[4*3];
     
-    
-    
-    tds[0].map=map;
-    tds[0].row_start=0;
-    tds[0].row_end=height/2;
-    tds[0].col_start=0;
-    tds[0].col_end=width/2;
-    threads[0]=SDL_CreateThread(thread_func,"0",&tds[0]);
-
-    tds[1].map=map;
-    tds[1].row_start=0;
-    tds[1].row_end=height/2;
-    tds[1].col_start=width/2;
-    tds[1].col_end=width;
-    threads[1]=SDL_CreateThread(thread_func,"1",&tds[1]);
-    
-    tds[2].map=map;
-    tds[2].row_start=height/2;
-    tds[2].row_end=height;
-    tds[2].col_start=0;
-    tds[2].col_end=width/2;
-    threads[2]=SDL_CreateThread(thread_func,"2",&tds[2]);
-
-    tds[3].map=map;
-    tds[3].row_start=height/2;
-    tds[3].row_end=height;
-    tds[3].col_start=width/2;
-    tds[3].col_end=width;
-    threads[3]=SDL_CreateThread(thread_func,"3",&tds[3]);
-    
-    int status=0;
-    for(size_t i=0; i<4; ++i)
+    for(size_t j=0; j < 3; ++j)
+        for(size_t i=0; i < 4; ++i)
+        {
+            int index=j*4+i;
+            
+            tds[index].row_start=height/3*j;
+            if(j==2) tds[index].row_end=height;
+            else tds[index].row_end=height/3*(j+1);
+            
+            tds[index].col_start=width/4*i;
+            if(i==3) tds[index].col_end=width;
+            else tds[index].col_end=width/4*(i+1);
+            
+            tds[index].th_index = index;
+            threads[index]=SDL_CreateThread(thread_func,NULL,&tds[index]);
+        }
+    for(size_t i=0; i<4*3; ++i)
     {
-        SDL_WaitThread(threads[i], &status);
-        printf("%p status: %d\n", threads[i], status);
+        SDL_WaitThread(threads[i], NULL);
     }
-    // for(size_t i=0; i < height; ++i)
-        // for(size_t j=0; j < width; ++j)
-        // {
-            // int y = to_graph_y(i);
-            // int x = to_graph_x(j);
-            // double s=scale*y-f(scale*x);
-            // char sign=(s>0)-(s<0);
-            // map[i][j]=sign;
-        // }
+    printf("All threads done.\n");
 }
 
 enum shape
@@ -158,7 +132,7 @@ enum shape
 double scale=1./128;
 double f(double x)
 {
-    // return x;
+    //inefficient (?) squarewave :P
     double result=sin(x);
     for(int i=0; i < 1000; ++i)
         result = sin(tan(result));
@@ -176,6 +150,7 @@ int main(int argc, char* argv[])
     float h=0.0;
     int thick_x=2;
     int thick_y=2;
+    bool axis=true;
     int x,y;
     enum shape shp=LEFT_TO_RIGHT;
     switch(shp)
@@ -198,6 +173,12 @@ int main(int argc, char* argv[])
     
     SDL_SetRenderDrawColor(ren, 0,0,0,0);
     SDL_RenderClear(ren);
+    if(axis)
+    {
+        SDL_SetRenderDrawColorFloat(ren, 1,1,1,1);
+        SDL_RenderLine(ren,0,height/2,width,height/2);
+        SDL_RenderLine(ren,width/2,0,width/2,height);
+    }
     while(true)
     {
         bool go=true;
