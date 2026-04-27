@@ -97,6 +97,20 @@ void graph_function_to_map()
     //4  threads done
     //12 threads
     //n  threads? ehhh its dum
+    //theoretically you should create only 11 threads
+    // and do the computation of the 12th thread on
+    // the main thread?
+    // but this works seemingly flawlessly
+    // and so does creating more threads than are
+    // available on the computer
+    // .o.
+    // after googling, it turns out there are
+    // thousands of threads running on my pc rn
+    // so threads dont mean literal logical cores on cpu
+    // also a process != a thread
+    // a process has its own memory pool for threads
+    // and is responsible for creating threads
+    // (altough a thread can have its own private mem)
     SDL_Thread* threads[4*3];
     thread_data tds[4*3];
     
@@ -150,7 +164,8 @@ int main(int argc, char* argv[])
     float h=0.0;
     int thick_x=2;
     int thick_y=2;
-    bool axis=true;
+    bool axis=false;
+    int frame=0;
     int x,y;
     enum shape shp=LEFT_TO_RIGHT;
     switch(shp)
@@ -217,7 +232,8 @@ int main(int argc, char* argv[])
             SDL_SetRenderDrawColorFloat(ren,rgb.r,rgb.g,rgb.b,1);
             SDL_FRect rect={ to_screen_x(x-thick_x/2), to_screen_y(y-thick_y/2),thick_x/2, thick_y/2 };
             SDL_RenderFillRect(ren,&rect);
-            SDL_RenderPresent(ren);
+            if(frame++%16==0)
+                SDL_RenderPresent(ren);
             h += 0.005;
         }
         }
