@@ -148,17 +148,17 @@ enum shape
 double scale=1./128;
 double f(double x)
 {
-    if (x==0) return 0;
+    if (x==0) return sqrt(M_PI_2);
     
-    int n;
+    int n, N=100;
     double result;
     
-    n=100;
+    n=N;
     result=x+n;
     while(n>1) result=x+--n/result;
     double result_even = 1 / result;
     
-    n=101;
+    n=N+1;
     result=x+n;
     while(n>1) result=x+--n/result;
     double result_odd = 1 / result;
