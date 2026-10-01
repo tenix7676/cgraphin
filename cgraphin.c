@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <./SDL3/SDL.h>
 #include <./SDL3/SDL_main.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 double f(double);
 //compile with
@@ -146,11 +148,23 @@ enum shape
 double scale=1./128;
 double f(double x)
 {
-    //inefficient (?) squarewave :P
-    double result=sin(x);
-    for(int i=0; i < 1000; ++i)
-        result = sin(tan(result));
-    return result;
+    if (x==0) return 0;
+    
+    int n;
+    double result;
+    
+    n=100;
+    result=x+n;
+    while(n>1) result=x+--n/result;
+    double result_even = 1 / result;
+    
+    n=101;
+    result=x+n;
+    while(n>1) result=x+--n/result;
+    double result_odd = 1 / result;
+    
+    
+    return sqrt(result_even * result_odd);
 }
 int main(int argc, char* argv[])
 {
@@ -164,7 +178,7 @@ int main(int argc, char* argv[])
     float h=0.0;
     int thick_x=2;
     int thick_y=2;
-    bool axis=false;
+    bool axis=true;
     int frame=0;
     int x,y;
     enum shape shp=LEFT_TO_RIGHT;
@@ -225,7 +239,8 @@ int main(int argc, char* argv[])
         char s3=map[to_screen_y(y+1)][to_screen_x(x+0)];
         char s4=map[to_screen_y(y+1)][to_screen_x(x+1)];
         if(!((s1<0&&s2<0&&s3<0&&s4<0)
-          || (s1>0&&s2>0&&s3>0&&s4>0)) )
+          || (s1>0&&s2>0&&s3>0&&s4>0))
+          || (scale*y-sqrt(M_PI_2)<=0) && (scale*(y+1)-sqrt(M_PI_2)>=0)    )
         {
             Lab lab = {L,C*cos(h),C*sin(h)};
             RGB rgb = oklab_to_linear_srgb(lab);
