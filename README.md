@@ -9,7 +9,7 @@ The graph shows that the crazy Ramanujan's formula
 
 $R_n(x)=\cfrac{1}{x+\cfrac{1}{x+\cfrac{2}{x+\cfrac{3}{x+...}}}}$
 
-approaches $\sqrt{\pi/2}$ at x=0 if you take the geometric mean of 
+approaches $y=\sqrt{\pi/2}$ at x=0 if you take the geometric mean of 
 its odd and even expansions - which is sort of just the square root of the Wallis product.
 
 Even expansion means it ends in an even number:
